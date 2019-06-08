@@ -19,8 +19,8 @@ export class TestExplorerStatusBarController implements TestController {
     this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 40);
     this.statusBarItem.show();
 
-    // Run all tests when the statusBarItem is clicked.
-    this.statusBarItem.command = 'test-explorer.run-all';
+    // View Test Explorer when the statusBarItem is clicked.
+    this.statusBarItem.command = 'workbench.view.extension.test';
   }
 
   registerTestAdapter(adapter: TestAdapter): void {

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { TestController, TestAdapter, TestSuiteInfo, TestInfo } from 'vscode-test-adapter-api';
 
-type Test = { id: String, state: 'unknown' | 'passed' | 'failed' | 'skipped' | 'running' | 'errored' };
+type Test = { id: String, state: 'pending' | 'passed' | 'failed' | 'skipped' | 'running' | 'errored' };
 
 /**
  * Controller for the Test StatusBarItem.
@@ -44,8 +44,7 @@ export class TestExplorerStatusBarController implements TestController {
     adapterDisposables.push(adapter.testStates(testRunEvent => {
       if (testRunEvent.type === 'started') {
         this.setStatusBarItemText('started');
-        this.passedTests = 0;
-        this.failedTests = 0;
+        this.resetTestState();
       } else if (testRunEvent.type === 'test') {
         this.setTestState(testRunEvent.test as String, testRunEvent.state);
         this.getTestStates();
@@ -87,8 +86,23 @@ export class TestExplorerStatusBarController implements TestController {
     } else { // info.type === test
       return {
         id: info.id,
-        state: 'unknown'
+        state: 'pending'
       }
+    }
+  }
+
+  /**
+   * Resets all tests in the testList's to pending.
+   * This prevents old data from being reused when the test suite is re-run.
+   */
+  private resetTestState(): void {
+    if (this.testList !== undefined) {
+      this.testList = this.testList.map(test => {
+        return {
+          id: test.id,
+          state: 'pending'
+        }
+      });
     }
   }
 
@@ -123,8 +137,14 @@ export class TestExplorerStatusBarController implements TestController {
 
     switch (status) {
       case 'running':
+        statusBarText += `${(((this.passedTests + this.failedTests) / this.countTests()) * 100).toFixed(1)}% `;
+        statusBarText += `${this.passedTests}/${this.countTests()} passed`
+        if (this.failedTests > 0) {
+          statusBarText += ` (${this.failedTests} failed)`;
+        }
+        break;
       case 'finished':
-        statusBarText += `Tests: ${this.passedTests}/${this.countTests()} passed`
+        statusBarText += `${this.passedTests}/${this.countTests()} passed`
         if (this.failedTests > 0) {
           statusBarText += ` (${this.failedTests} failed)`;
         }

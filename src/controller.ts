@@ -134,20 +134,19 @@ export class TestExplorerStatusBarController implements TestController {
 
   private setStatusBarItemText(status: 'loading' | 'loaded' | 'waiting' | 'started' | 'running' | 'finished'): void {
     let statusBarText = '$(beaker) ';
+    let failedTestString = '';
 
     switch (status) {
       case 'running':
-        statusBarText += `${(((this.passedTests + this.failedTests) / this.countTests()) * 100).toFixed(1)}% `;
-        statusBarText += `${this.passedTests}/${this.countTests()} passed`
-        if (this.failedTests > 0) {
-          statusBarText += ` (${this.failedTests} failed)`;
-        }
+        let percentageComplete = (((this.passedTests + this.failedTests) / this.countTests()) * 100).toFixed(1);
+        failedTestString = '';
+        if (this.failedTests > 0) { failedTestString = ` | $(x) ${this.failedTests}` }
+        statusBarText += `${this.countTests()} tests | ${percentageComplete}% ($(check) ${this.passedTests}${failedTestString})`;
         break;
       case 'finished':
-        statusBarText += `${this.passedTests}/${this.countTests()} passed`
-        if (this.failedTests > 0) {
-          statusBarText += ` (${this.failedTests} failed)`;
-        }
+        failedTestString = '';
+        if (this.failedTests > 0) { failedTestString = ` | $(x) ${this.failedTests}` }
+        statusBarText += `${this.countTests()} tests ($(check) ${this.passedTests}${failedTestString})`;
         break;
       case 'started':
         statusBarText += 'Running tests...';

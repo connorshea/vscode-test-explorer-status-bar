@@ -2,6 +2,11 @@
 
 This is a VS Code extension that adds a status bar item for test statistics. It works with the [Test Explorer](https://marketplace.visualstudio.com/items?itemName=hbenl.vscode-test-explorer) extension and any of its adapters.
 
+![A screenshot of the status bar item](/img/screenshot1.png)
+![A screenshot of the status bar item while running](/img/screenshot2.png)
+![A screenshot of the status bar item while running after a test has failed](/img/screenshot3.png)
+![A screenshot of the status bar item after the tests have finished running](/img/screenshot4.png)
+
 ## Contributing
 
 You'll need VS Code and node.js (any version >= 10 should probably work).

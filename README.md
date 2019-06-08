@@ -1,5 +1,7 @@
 # Test Explorer Status Bar extension
 
+**[Install it from the VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=connorshea.vscode-test-explorer-status-bar)**
+
 This is a VS Code extension that adds a status bar item for test statistics. It works with the [Test Explorer](https://marketplace.visualstudio.com/items?itemName=hbenl.vscode-test-explorer) extension and any of its adapters.
 
 ![A screenshot of the status bar item](/img/screenshot1.png)

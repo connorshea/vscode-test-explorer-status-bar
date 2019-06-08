@@ -16,7 +16,7 @@ export class TestExplorerStatusBarController implements TestController {
   private testList: Array<Test> | undefined = undefined;
 
   constructor() {
-    this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 11);
+    this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 40);
     this.statusBarItem.show();
 
     // Run all tests when the statusBarItem is clicked.
@@ -29,33 +29,30 @@ export class TestExplorerStatusBarController implements TestController {
 
     adapterDisposables.push(adapter.tests(testLoadEvent => {
       if (testLoadEvent.type === 'started') {
-        this.statusBarItem.text = '$(beaker) Loading tests...';
+        this.setStatusBarItemText('loading');
       } else {
         this.testSuite = testLoadEvent.suite;
         this.getTestSuiteInfo(this.testSuite);
-        this.statusBarItem.text = `$(beaker) Loaded ${this.countTests()} tests`;
+        this.setStatusBarItemText('loaded');
+        // Wait 3 seconds, then return to 'waiting' state.
+        setTimeout(() => {
+          this.setStatusBarItemText('waiting');
+        }, 3000);
       }
     }));
 
     adapterDisposables.push(adapter.testStates(testRunEvent => {
       if (testRunEvent.type === 'started') {
-        this.statusBarItem.text = '$(beaker) Running tests: ...';
+        this.setStatusBarItemText('started');
         this.passedTests = 0;
         this.failedTests = 0;
       } else if (testRunEvent.type === 'test') {
         this.setTestState(testRunEvent.test as String, testRunEvent.state);
         this.getTestStates();
-        this.statusBarItem.text =
-          this.failedTests > 0
-            ? `$(beaker) Running tests: ${this.passedTests}/${this.countTests()} passed (${this.failedTests} failed)`
-            : `$(beaker) Running tests: ${this.passedTests}/${this.countTests()} passed`;
-      
+        this.setStatusBarItemText('running');
       } else if (testRunEvent.type === 'finished') {
         this.getTestStates();
-        this.statusBarItem.text =
-          this.failedTests > 0
-            ? `$(beaker) Tests: ${this.passedTests}/${this.countTests()} passed (${this.failedTests} failed)`
-            : `$(beaker) Tests: ${this.passedTests}/${this.countTests()} passed`;
+        this.setStatusBarItemText('finished');
       }
     }));
   }
@@ -119,5 +116,35 @@ export class TestExplorerStatusBarController implements TestController {
     } else {
       return this.testList.length;
     }
+  }
+
+  private setStatusBarItemText(status: 'loading' | 'loaded' | 'waiting' | 'started' | 'running' | 'finished'): void {
+    let statusBarText = '$(beaker) ';
+
+    switch (status) {
+      case 'running':
+      case 'finished':
+        statusBarText += `Tests: ${this.passedTests}/${this.countTests()} passed`
+        if (this.failedTests > 0) {
+          statusBarText += ` (${this.failedTests} failed)`;
+        }
+        break;
+      case 'started':
+        statusBarText += 'Running tests...';
+        break;
+      case 'loading':
+        statusBarText += 'Loading tests...';
+        break;
+      case 'loaded':
+        statusBarText += `Loaded ${this.countTests()} tests`;
+        break;
+      case 'waiting':
+        statusBarText += `${this.countTests()} tests`;
+        break;
+      default:
+        break;
+    }
+
+    this.statusBarItem.text = statusBarText;
   }
 }

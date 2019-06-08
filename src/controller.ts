@@ -16,7 +16,7 @@ export class StatusBarController implements TestController {
   private failedTests = 0;
   private testCount = 0;
   private testSuite: TestSuiteInfo | undefined = undefined;
-  private testList: Array<TestInfo> | undefined = undefined;
+  private testList: Array<{ id: String, state: String }> | undefined = undefined;
 
   constructor() {
     this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 5);
@@ -36,8 +36,8 @@ export class StatusBarController implements TestController {
         this.statusBarItem.text = 'Loading tests...';
       } else {
         this.testSuite = testLoadEvent.suite;
-        this.getTestSuiteInfo(testLoadEvent.suite);
-        this.testCount = this.testSuite ? countTests(this.testSuite) : 0;
+        this.getTestSuiteInfo(this.testSuite);
+        this.testCount = this.testSuite ? this.countTests(this.testSuite) : 0;
         this.statusBarItem.text = `Loaded ${this.testCount} tests`;
       }
     }));
@@ -48,17 +48,15 @@ export class StatusBarController implements TestController {
         this.passedTests = 0;
         this.failedTests = 0;
       } else if (testRunEvent.type === 'test') {
-        if (testRunEvent.state === 'passed') {
-          this.passedTests++;
-        } else if (testRunEvent.state === 'failed') {
-          this.failedTests++;
-        }
+        this.setTestState(testRunEvent.test as String, testRunEvent.state);
+        this.getTestStates();
         this.statusBarItem.text =
           this.failedTests > 0
             ? `Running tests: ${this.passedTests}/${this.testCount} passed (${this.failedTests} failed)`
             : `Running tests: ${this.passedTests}/${this.testCount} passed`;
       
       } else if (testRunEvent.type === 'finished') {
+        this.getTestStates();
         this.statusBarItem.text =
           this.failedTests > 0
             ? `Tests: ${this.passedTests}/${this.testCount} passed (${this.failedTests} failed)`
@@ -82,44 +80,50 @@ export class StatusBarController implements TestController {
       return [];
     }
     
-    this.testList = this.generateTestList(suite);
-    console.log(this.testList);
+    this.testList = this.generateTestList(suite) as Array<{ id: String, state: String }>;
 
     return this.testList;
   }
 
-  private generateTestList(info: TestSuiteInfo | TestInfo): any {
-    console.log(info);
+  private generateTestList(info: TestSuiteInfo | TestInfo): (Array<{ id: String, state: String }> | { id: String, state: String }) {
     if (info.type === 'suite') {
       let testList: Array<any> = [];
       for (const child of info.children) {
-        testList.concat(this.generateTestList(child));
+        testList = testList.concat(this.generateTestList(child));
       }
       return testList;
     } else { // info.type === test
       return {
         id: info.id,
-        status: 'unknown'
+        state: 'unknown'
       }
     }
   }
 
   private setTestState(testId: String, state: String): void {
     if (this.testList !== undefined) {
-      // let test = this.testList.filter((test) => test.id === testId);
+      let testIndex = this.testList.findIndex((test) => test.id === testId);
+      if (this.testList[testIndex] !== undefined) {
+        this.testList[testIndex].state = state;
+      }
     }
   }
-}
 
-function countTests(info: TestSuiteInfo | TestInfo): number {
-  if (info.type === 'suite') {
-    let total = 0;
-    for (const child of info.children) {
-      total += countTests(child);
+  private getTestStates(): void {
+    console.log('getTestStates');
+    if (this.testList !== undefined) {
+      let passedTests = this.testList.filter(test => test.state === 'passed');
+      let failedTests = this.testList.filter(test => test.state === 'failed');
+      this.passedTests = passedTests.length;
+      this.failedTests = failedTests.length;
     }
-    return total;
-  } else if (info.type === 'test') {
-    return 1;
   }
-  return 0;
+
+  private countTests(info: TestSuiteInfo | TestInfo): number {
+    if (this.testList === undefined) {
+      return 0;
+    } else {
+      return this.testList.length;
+    }
+  }
 }

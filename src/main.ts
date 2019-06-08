@@ -7,20 +7,20 @@ let controller: ExampleController | undefined;
 
 export async function activate(context: vscode.ExtensionContext) {
 
-	// get the Test Explorer extension
-	const testExplorerExtension = vscode.extensions.getExtension<TestHub>(testExplorerExtensionId);
+  // get the Test Explorer extension
+  const testExplorerExtension = vscode.extensions.getExtension<TestHub>(testExplorerExtensionId);
 
-	if (testExplorerExtension) {
+  if (testExplorerExtension) {
 
-		testHub = testExplorerExtension.exports;
-		controller = new ExampleController();
-		testHub.registerTestController(controller);
+    testHub = testExplorerExtension.exports;
+    controller = new ExampleController();
+    testHub.registerTestController(controller);
 
-	}
+  }
 }
 
 export function deactivate(): void {
-	if (testHub && controller) {
-		testHub.unregisterTestController(controller);
-	}
+  if (testHub && controller) {
+    testHub.unregisterTestController(controller);
+  }
 }

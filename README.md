@@ -1,33 +1,26 @@
-# Implementing a Test Controller for Visual Studio Code
+# Test Explorer Status Bar extension
 
-This repository contains an example for implementing a `TestController` extension that works with the
-[Test Explorer](https://marketplace.visualstudio.com/items?itemName=hbenl.vscode-test-explorer) extension.
+This is a VS Code extension that adds a status bar item for test statistics. It works with the [Test Explorer](https://marketplace.visualstudio.com/items?itemName=hbenl.vscode-test-explorer) extension and any of its adapters.
 
-## Setup
+## Contributing
 
-* install the [Test Explorer](https://marketplace.visualstudio.com/items?itemName=hbenl.vscode-test-explorer) extension
-* fork and clone this repository and open it in VS Code
-* run `npm install`
-* run `npm run watch` or start the watch Task in VS Code
-* start the debugger
+You'll need VS Code and node.js (any version >= 10 should probably work).
 
-You should now see a second VS Code window, the Extension Development Host, in which the `ExampleController` is active:
-When you open a folder in this window, a Status Bar Item with the text "Loaded *n* tests" should show up.
-When you click that Status Bar Item, a test run will be started and the text of the Status Bar Item will change
-to show the number of passed and failed tests.
+- Clone the repository: `git clone https://github.com/connorshea/vscode-test-explorer-status-bar`
+- Run `npm install` to install dependencies.
+- Open the directory in VS Code.
+- Run `npm run watch` or start the `watch` Task in VS Code to get the TypeScript compiler running.
+- Go to the Debug section in the sidebar and run "Status Bar extension". This will start a separate VS Code instance for testing the extension in. It gets updated code whenever "Reload Window" is run in the Command Palette.
+  - You'll need a test adapter (e.g. the [Ruby adapter](https://marketplace.visualstudio.com/items?itemName=connorshea.vscode-ruby-test-adapter)) and a test suite to use the status bar extension with.
 
-## Implementation
+This extension is based on [the example test controller](https://github.com/hbenl/vscode-example-test-controller), it may be useful to check that repository for more information.
 
-This really depends on what you want to do with your Test Controller.
-The example code shows how to subscribe to the main `TestAdapter` events and you can also send `load`/`run`/`debug`
-requests to them.
-You will receive all events sent by the Test Adapters, even if the requests that led to these events came from 
-the Test Explorer or any other Test Controller.
+### Publishing a new version
 
-## Publish
+See [the VS Code extension docs](https://code.visualstudio.com/api/working-with-extensions/publishing-extension) for more info.
 
-* update `package.json` with your preferred values (at a minimum you should change `name`, `displayName`, `description`, `author`, `publisher`, `homepage`, `repository` and `bugs`)
-* create an icon for your Test Controller (there's an SVG version of the Test Explorer icon at `img/test-explorer.svg`) and reference it in `package.json`
-* replace this README with your documentation
+Before publishing, make sure to update the `CHANGELOG.md` file. You also need to be logged in to `vsce`.
 
-Now you're ready to [publish](https://code.visualstudio.com/docs/extensions/publish-extension) the first version of your Test Controller.
+`vsce publish VERSION`, e.g. `vsce publish 1.0.0` will automatically handle creating the git commit and git tag, updating the `package.json`, and publishing the new version to the Visual Studio Marketplace. You'll need to manually run `git push` and `git push --tags` after publishing.
+
+Alternatively, you can bump the extension version with `vsce publish major`, `vsce publish minor`, or `vsce publish patch`.

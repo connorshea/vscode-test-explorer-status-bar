@@ -4,7 +4,7 @@
     {
       "type": "extensionHost",
       "request": "launch",
-      "name": "Example Controller",
+      "name": "Status Bar extension",
       "runtimeExecutable": "${execPath}",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}"

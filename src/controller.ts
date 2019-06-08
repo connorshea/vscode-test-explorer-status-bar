@@ -1,29 +1,25 @@
 import * as vscode from 'vscode';
 import { TestController, TestAdapter, TestSuiteInfo, TestInfo } from 'vscode-test-adapter-api';
 
-/**
- * This class is intended as a starting point for implementing a "real" TestController.
- * The file `README.md` contains further instructions.
- */
-export class StatusBarController implements TestController {
+type Test = { id: String, state: 'unknown' | 'passed' | 'failed' | 'skipped' | 'running' | 'errored' };
 
-  // here we collect subscriptions and other disposables that need
-  // to be disposed when an adapter is unregistered
+/**
+ * Controller for the Test StatusBarItem.
+ */
+export class TestExplorerStatusBarController implements TestController {
   private readonly disposables = new Map<TestAdapter, { dispose(): void }[]>();
 
   private statusBarItem: vscode.StatusBarItem;
   private passedTests = 0;
   private failedTests = 0;
-  private testCount = 0;
   private testSuite: TestSuiteInfo | undefined = undefined;
-  private testList: Array<{ id: String, state: String }> | undefined = undefined;
+  private testList: Array<Test> | undefined = undefined;
 
   constructor() {
-    this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 5);
+    this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 11);
     this.statusBarItem.show();
 
-    // Run all tests when the statusBarItem is clicked,
-    // We do this by invoking a command that is contributed by the Test Explorer extension
+    // Run all tests when the statusBarItem is clicked.
     this.statusBarItem.command = 'test-explorer.run-all';
   }
 
@@ -33,18 +29,17 @@ export class StatusBarController implements TestController {
 
     adapterDisposables.push(adapter.tests(testLoadEvent => {
       if (testLoadEvent.type === 'started') {
-        this.statusBarItem.text = 'Loading tests...';
+        this.statusBarItem.text = '$(beaker) Loading tests...';
       } else {
         this.testSuite = testLoadEvent.suite;
         this.getTestSuiteInfo(this.testSuite);
-        this.testCount = this.testSuite ? this.countTests(this.testSuite) : 0;
-        this.statusBarItem.text = `Loaded ${this.testCount} tests`;
+        this.statusBarItem.text = `$(beaker) Loaded ${this.countTests()} tests`;
       }
     }));
 
     adapterDisposables.push(adapter.testStates(testRunEvent => {
       if (testRunEvent.type === 'started') {
-        this.statusBarItem.text = 'Running tests: ...';
+        this.statusBarItem.text = '$(beaker) Running tests: ...';
         this.passedTests = 0;
         this.failedTests = 0;
       } else if (testRunEvent.type === 'test') {
@@ -52,15 +47,15 @@ export class StatusBarController implements TestController {
         this.getTestStates();
         this.statusBarItem.text =
           this.failedTests > 0
-            ? `Running tests: ${this.passedTests}/${this.testCount} passed (${this.failedTests} failed)`
-            : `Running tests: ${this.passedTests}/${this.testCount} passed`;
+            ? `$(beaker) Running tests: ${this.passedTests}/${this.countTests()} passed (${this.failedTests} failed)`
+            : `$(beaker) Running tests: ${this.passedTests}/${this.countTests()} passed`;
       
       } else if (testRunEvent.type === 'finished') {
         this.getTestStates();
         this.statusBarItem.text =
           this.failedTests > 0
-            ? `Tests: ${this.passedTests}/${this.testCount} passed (${this.failedTests} failed)`
-            : `Tests: ${this.passedTests}/${this.testCount} passed`;
+            ? `$(beaker) Tests: ${this.passedTests}/${this.countTests()} passed (${this.failedTests} failed)`
+            : `$(beaker) Tests: ${this.passedTests}/${this.countTests()} passed`;
       }
     }));
   }
@@ -80,12 +75,12 @@ export class StatusBarController implements TestController {
       return [];
     }
     
-    this.testList = this.generateTestList(suite) as Array<{ id: String, state: String }>;
+    this.testList = this.generateTestList(suite) as Array<Test>;
 
     return this.testList;
   }
 
-  private generateTestList(info: TestSuiteInfo | TestInfo): (Array<{ id: String, state: String }> | { id: String, state: String }) {
+  private generateTestList(info: TestSuiteInfo | TestInfo): (Array<Test> | Test) {
     if (info.type === 'suite') {
       let testList: Array<any> = [];
       for (const child of info.children) {
@@ -100,7 +95,7 @@ export class StatusBarController implements TestController {
     }
   }
 
-  private setTestState(testId: String, state: String): void {
+  private setTestState(testId: String, state: Test['state']): void {
     if (this.testList !== undefined) {
       let testIndex = this.testList.findIndex((test) => test.id === testId);
       if (this.testList[testIndex] !== undefined) {
@@ -110,16 +105,15 @@ export class StatusBarController implements TestController {
   }
 
   private getTestStates(): void {
-    console.log('getTestStates');
     if (this.testList !== undefined) {
-      let passedTests = this.testList.filter(test => test.state === 'passed');
-      let failedTests = this.testList.filter(test => test.state === 'failed');
+      let passedTests = this.testList.filter(test => ['passed', 'skipped'].includes(test.state));
+      let failedTests = this.testList.filter(test => ['failed', 'errored'].includes(test.state));
       this.passedTests = passedTests.length;
       this.failedTests = failedTests.length;
     }
   }
 
-  private countTests(info: TestSuiteInfo | TestInfo): number {
+  private countTests(): number {
     if (this.testList === undefined) {
       return 0;
     } else {

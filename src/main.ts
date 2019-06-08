@@ -1,17 +1,17 @@
 import * as vscode from 'vscode';
 import { TestHub, testExplorerExtensionId } from 'vscode-test-adapter-api';
-import { StatusBarController } from './controller';
+import { TestExplorerStatusBarController } from './controller';
 
 let testHub: TestHub | undefined;
-let controller: StatusBarController | undefined;
+let controller: TestExplorerStatusBarController | undefined;
 
 export async function activate(context: vscode.ExtensionContext) {
-  // get the Test Explorer extension
+  // Get the Test Explorer extension
   const testExplorerExtension = vscode.extensions.getExtension<TestHub>(testExplorerExtensionId);
 
   if (testExplorerExtension) {
     testHub = testExplorerExtension.exports;
-    controller = new StatusBarController();
+    controller = new TestExplorerStatusBarController();
     testHub.registerTestController(controller);
   }
 }

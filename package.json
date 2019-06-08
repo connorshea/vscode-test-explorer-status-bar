@@ -1,26 +1,28 @@
 {
-  "name": "vscode-example-test-controller",
-  "displayName": "Example Test Explorer",
-  "description": "An example Test Controller for Visual Studio Code",
+  "name": "vscode-test-explorer-status-bar",
+  "displayName": "Test Explorer Status Bar",
+  "description": "A Status Bar for the Text Explorer UI extension.",
   "icon": "img/icon.png",
-  "author": "Holger Benl <hbenl@evandor.de>",
-  "publisher": "hbenl",
-  "version": "0.0.1",
+  "author": "Connor Shea <connor.james.shea@gmail.com>",
+  "publisher": "connorshea",
+  "version": "1.0.0",
   "license": "MIT",
-  "homepage": "https://github.com/hbenl/vscode-example-test-controller",
+  "homepage": "https://github.com/connorshea/vscode-test-explorer-status-bar",
   "repository": {
     "type": "git",
-    "url": "https://github.com/hbenl/vscode-example-test-controller.git"
+    "url": "https://github.com/connorshea/vscode-test-explorer-status-bar.git"
   },
   "bugs": {
-    "url": "https://github.com/hbenl/vscode-example-test-controller/issues"
+    "url": "https://github.com/connorshea/vscode-test-explorer-status-bar/issues"
   },
   "categories": [
     "Other"
   ],
   "keywords": [
     "test",
-    "testing"
+    "testing",
+    "status-bar",
+    "test-explorer"
   ],
   "main": "out/main.js",
   "scripts": {
@@ -42,7 +44,7 @@
     "vscode": "^1.1.34"
   },
   "engines": {
-    "vscode": "^1.23.0"
+    "vscode": "^1.34.0"
   },
   "extensionDependencies": [
     "hbenl.vscode-test-explorer"

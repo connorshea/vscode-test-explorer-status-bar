@@ -3,6 +3,13 @@ import { TestController, TestAdapter, TestSuiteInfo, TestInfo } from 'vscode-tes
 
 type Test = { id: String, state: 'pending' | 'passed' | 'failed' | 'skipped' | 'running' | 'errored' };
 
+class TestAdapterState {
+  public passedTests: number = 0;
+  public failedTests: number = 0;
+  public testSuite: TestSuiteInfo | undefined = undefined;
+  public testList: Array<Test> | undefined = undefined;
+}
+
 /**
  * Controller for the Test StatusBarItem.
  */
@@ -10,10 +17,7 @@ export class TestExplorerStatusBarController implements TestController {
   private readonly disposables = new Map<TestAdapter, { dispose(): void }[]>();
 
   private statusBarItem: vscode.StatusBarItem;
-  private passedTests = 0;
-  private failedTests = 0;
-  private testSuite: TestSuiteInfo | undefined = undefined;
-  private testList: Array<Test> | undefined = undefined;
+  private testAdapterStates: TestAdapterState[] = []; 
 
   constructor() {
     this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 40);
@@ -27,12 +31,15 @@ export class TestExplorerStatusBarController implements TestController {
     const adapterDisposables: { dispose(): void }[] = [];
     this.disposables.set(adapter, adapterDisposables);
 
+    const testAdapterState = new TestAdapterState();
+    this.testAdapterStates.push(testAdapterState);
+    
     adapterDisposables.push(adapter.tests(testLoadEvent => {
       if (testLoadEvent.type === 'started') {
         this.setStatusBarItemText('loading');
       } else {
-        this.testSuite = testLoadEvent.suite;
-        this.getTestSuiteInfo(this.testSuite);
+        testAdapterState.testSuite = testLoadEvent.suite;
+        this.getTestSuiteInfo(testAdapterState, testAdapterState.testSuite);
         this.setStatusBarItemText('loaded');
         // Wait 3 seconds, then return to 'waiting' state.
         setTimeout(() => {
@@ -44,13 +51,13 @@ export class TestExplorerStatusBarController implements TestController {
     adapterDisposables.push(adapter.testStates(testRunEvent => {
       if (testRunEvent.type === 'started') {
         this.setStatusBarItemText('started');
-        this.resetTestState();
+        this.resetTestState(testAdapterState);
       } else if (testRunEvent.type === 'test') {
-        this.setTestState(testRunEvent.test as String, testRunEvent.state);
-        this.getTestStates();
+        this.setTestState(testAdapterState, testRunEvent.test as String, testRunEvent.state);
+        this.getTestStates(testAdapterState);
         this.setStatusBarItemText('running');
       } else if (testRunEvent.type === 'finished') {
-        this.getTestStates();
+        this.getTestStates(testAdapterState);
         this.setStatusBarItemText('finished');
       }
     }));
@@ -66,14 +73,14 @@ export class TestExplorerStatusBarController implements TestController {
     }
   }
 
-  private getTestSuiteInfo(suite: TestSuiteInfo | undefined): any {
+  private getTestSuiteInfo(testAdapterState: TestAdapterState, suite: TestSuiteInfo | undefined): any {
     if (suite === undefined) {
       return [];
     }
     
-    this.testList = this.generateTestList(suite) as Array<Test>;
+    testAdapterState.testList = this.generateTestList(suite) as Array<Test>;
 
-    return this.testList;
+    return testAdapterState.testList;
   }
 
   private generateTestList(info: TestSuiteInfo | TestInfo): (Array<Test> | Test) {
@@ -95,9 +102,9 @@ export class TestExplorerStatusBarController implements TestController {
    * Resets all tests in the testList's to pending.
    * This prevents old data from being reused when the test suite is re-run.
    */
-  private resetTestState(): void {
-    if (this.testList !== undefined) {
-      this.testList = this.testList.map(test => {
+  private resetTestState(testAdapterState: TestAdapterState): void {
+    if (testAdapterState.testList !== undefined) {
+      testAdapterState.testList = testAdapterState.testList.map(test => {
         return {
           id: test.id,
           state: 'pending'
@@ -106,47 +113,52 @@ export class TestExplorerStatusBarController implements TestController {
     }
   }
 
-  private setTestState(testId: String, state: Test['state']): void {
-    if (this.testList !== undefined) {
-      let testIndex = this.testList.findIndex((test) => test.id === testId);
-      if (this.testList[testIndex] !== undefined) {
-        this.testList[testIndex].state = state;
+  private setTestState(testAdapterState: TestAdapterState, testId: String, state: Test['state']): void {
+    if (testAdapterState.testList !== undefined) {
+      let testIndex = testAdapterState.testList.findIndex((test) => test.id === testId);
+      if (testAdapterState.testList[testIndex] !== undefined) {
+        testAdapterState.testList[testIndex].state = state;
       }
     }
   }
 
-  private getTestStates(): void {
-    if (this.testList !== undefined) {
-      let passedTests = this.testList.filter(test => ['passed', 'skipped'].includes(test.state));
-      let failedTests = this.testList.filter(test => ['failed', 'errored'].includes(test.state));
-      this.passedTests = passedTests.length;
-      this.failedTests = failedTests.length;
+  private getTestStates(testAdapterState: TestAdapterState): void {
+    if (testAdapterState.testList !== undefined) {
+      let passedTests = testAdapterState.testList.filter(test => ['passed', 'skipped'].includes(test.state));
+      let failedTests = testAdapterState.testList.filter(test => ['failed', 'errored'].includes(test.state));
+      testAdapterState.passedTests = passedTests.length;
+      testAdapterState.failedTests = failedTests.length;
     }
   }
 
-  private countTests(): number {
-    if (this.testList === undefined) {
-      return 0;
-    } else {
-      return this.testList.length;
-    }
+  private countTests(valueFn: (state: TestAdapterState) => number): number {
+    return this.testAdapterStates.map(valueFn).reduce((a, b) => a + b, 0);
   }
 
   private setStatusBarItemText(status: 'loading' | 'loaded' | 'waiting' | 'started' | 'running' | 'finished'): void {
     let statusBarText = '$(beaker) ';
     let failedTestString = '';
 
+    const totalTests = this.countTests(s => {
+      if (s.testList === undefined) {
+        return 0;
+      } else {
+        return s.testList.length;
+      }
+    });
+    const totalPassed = this.countTests(s => s.passedTests);
+    const totalFailed = this.countTests(s => s.failedTests);
     switch (status) {
       case 'running':
-        let percentageComplete = (((this.passedTests + this.failedTests) / this.countTests()) * 100).toFixed(1);
+        let percentageComplete = (((totalPassed + totalFailed) / totalTests) * 100).toFixed(1);
         failedTestString = '';
-        if (this.failedTests > 0) { failedTestString = ` | $(x) ${this.failedTests}` }
-        statusBarText += `${this.countTests()} tests | ${percentageComplete}% ($(check) ${this.passedTests}${failedTestString})`;
+        if (totalFailed > 0) { failedTestString = ` | $(x) ${totalFailed}` }
+        statusBarText += `${totalTests} tests | ${percentageComplete}% ($(check) ${totalPassed}${failedTestString})`;
         break;
       case 'finished':
         failedTestString = '';
-        if (this.failedTests > 0) { failedTestString = ` | $(x) ${this.failedTests}` }
-        statusBarText += `${this.countTests()} tests ($(check) ${this.passedTests}${failedTestString})`;
+        if (totalFailed > 0) { failedTestString = ` | $(x) ${totalFailed}` }
+        statusBarText += `${totalTests} tests ($(check) ${totalPassed}${failedTestString})`;
         break;
       case 'started':
         statusBarText += 'Running tests...';
@@ -155,10 +167,10 @@ export class TestExplorerStatusBarController implements TestController {
         statusBarText += 'Loading tests...';
         break;
       case 'loaded':
-        statusBarText += `Loaded ${this.countTests()} tests`;
+        statusBarText += `Loaded ${totalTests} tests`;
         break;
       case 'waiting':
-        statusBarText += `${this.countTests()} tests`;
+        statusBarText += `${totalTests} tests`;
         break;
       default:
         break;

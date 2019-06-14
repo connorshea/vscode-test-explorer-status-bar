@@ -53,7 +53,8 @@ export class TestExplorerStatusBarController implements TestController {
         this.setStatusBarItemText('started');
         this.resetTestState(testAdapterState);
       } else if (testRunEvent.type === 'test') {
-        this.setTestState(testAdapterState, testRunEvent.test as String, testRunEvent.state);
+        const testId = (typeof testRunEvent.test === 'string') ? testRunEvent.test : testRunEvent.test.id;
+        this.setTestState(testAdapterState, testId, testRunEvent.state);
         this.getTestStates(testAdapterState);
         this.setStatusBarItemText('running');
       } else if (testRunEvent.type === 'finished') {

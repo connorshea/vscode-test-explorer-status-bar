@@ -9,6 +9,7 @@
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}"
       ],
+      "preLaunchTask": "npm: build",
       "outFiles": [
         "${workspaceFolder}/out"
       ]

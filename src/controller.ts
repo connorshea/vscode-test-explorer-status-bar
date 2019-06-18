@@ -34,11 +34,11 @@ export class TestExplorerStatusBarController implements TestController {
     const testAdapterState = new TestAdapterState();
     this.testAdapterStates.push(testAdapterState);
 
-    let timeoutID:NodeJS.Timeout;
+    let timeoutId: NodeJS.Timeout;
     
     adapterDisposables.push(adapter.tests(testLoadEvent => {
-      if (timeoutID) {
-        clearTimeout(timeoutID);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
       }
       if (testLoadEvent.type === 'started') {
         this.setStatusBarItemText('loading');
@@ -47,15 +47,15 @@ export class TestExplorerStatusBarController implements TestController {
         this.getTestSuiteInfo(testAdapterState, testAdapterState.testSuite);
         this.setStatusBarItemText('loaded');
         // Wait 3 seconds, then return to 'waiting' state unless canceled.
-        timeoutID = setTimeout(() => {
+        timeoutId = setTimeout(() => {
           this.setStatusBarItemText('waiting');
         }, 3000);
       }
     }));
 
     adapterDisposables.push(adapter.testStates(testRunEvent => {
-      if (timeoutID) {
-        clearTimeout(timeoutID);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
       }
       if (testRunEvent.type === 'started') {
         this.setStatusBarItemText('started');

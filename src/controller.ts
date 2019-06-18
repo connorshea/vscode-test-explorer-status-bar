@@ -46,7 +46,7 @@ export class TestExplorerStatusBarController implements TestController {
         testAdapterState.testSuite = testLoadEvent.suite;
         this.getTestSuiteInfo(testAdapterState, testAdapterState.testSuite);
         this.setStatusBarItemText('loaded');
-        // Wait 3 seconds, then return to 'waiting' state unless canceled.
+        // Wait 3 seconds, then return to 'waiting' state unless cancelled.
         timeoutId = setTimeout(() => {
           this.setStatusBarItemText('waiting');
         }, 3000);

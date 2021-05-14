@@ -11,7 +11,7 @@ This is a VS Code extension that adds a status bar item for test statistics. It 
 
 ## Contributing
 
-You'll need VS Code and node.js (any version >= 10 should probably work).
+You'll need VS Code and Node (any version >= 12 should probably work).
 
 - Clone the repository: `git clone https://github.com/connorshea/vscode-test-explorer-status-bar`
 - Run `npm install` to install dependencies.

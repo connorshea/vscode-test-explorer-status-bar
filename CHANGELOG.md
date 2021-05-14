@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### Added
+- When the test run fails, the status bar item background will now use the error background theme color. ([#13](https://github.com/connorshea/vscode-test-explorer-status-bar/pull/13))
+
+### Changed
+- Updated dependencies.
 
 ## [1.1.2] - 2019-06-18
 ### Fixed

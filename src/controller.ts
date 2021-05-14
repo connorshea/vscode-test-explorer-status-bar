@@ -157,16 +157,24 @@ export class TestExplorerStatusBarController implements TestController {
     });
     const totalPassed = this.countTests(s => s.passedTests);
     const totalFailed = this.countTests(s => s.failedTests);
+    // Reset the background color, to prevent the error state from persisting unnecessarily.
+    this.statusBarItem.backgroundColor = undefined;
     switch (status) {
       case 'running':
         let percentageComplete = (((totalPassed + totalFailed) / totalTests) * 100).toFixed(1);
         failedTestString = '';
-        if (totalFailed > 0) { failedTestString = ` | $(x) ${totalFailed}` }
+        if (totalFailed > 0) {
+          failedTestString = ` | $(x) ${totalFailed}`;
+          this.statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
+        }
         statusBarText += `${totalTests} tests | ${percentageComplete}% ($(check) ${totalPassed}${failedTestString})`;
         break;
       case 'finished':
         failedTestString = '';
-        if (totalFailed > 0) { failedTestString = ` | $(x) ${totalFailed}` }
+        if (totalFailed > 0) {
+          failedTestString = ` | $(x) ${totalFailed}`;
+          this.statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
+        }
         statusBarText += `${totalTests} tests ($(check) ${totalPassed}${failedTestString})`;
         break;
       case 'started':
